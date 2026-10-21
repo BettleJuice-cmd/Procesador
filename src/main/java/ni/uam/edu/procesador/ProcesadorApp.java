@@ -17,10 +17,12 @@ public class ProcesadorApp extends Application {
     private final ProgressBar barra2 = new ProgressBar(0);
     private final Button iniciar = new Button("Iniciar");
     private final Button cancelar = new Button("Cancelar");
+    private final Button reiniciar = new Button("Reiniciar");
 
     private static class ContadorSeguro {
         private int valor;
         public synchronized int incrementar() { return ++valor; }
+        public synchronized void reiniciar() {valor = 0;}
     }
 
     private Task<Void> crearTarea(String operador) {
@@ -52,6 +54,7 @@ public class ProcesadorApp extends Application {
         iniciar.setOnAction(e -> {
             iniciar.setDisable(true);
             cancelar.setDisable(false);
+            reiniciar.setDisable(true);
             tarea1 = crearTarea("Operador A");
             tarea2 = crearTarea("Operador B");
             barra1.progressProperty().bind(tarea1.progressProperty());
@@ -60,6 +63,7 @@ public class ProcesadorApp extends Application {
             Runnable actualizarEstado = () -> {
                 if (tarea1.isDone() && tarea2.isDone()) {
                     cancelar.setDisable(true);
+                    reiniciar.setDisable(false);
                     estado.setText("Ambas tareas finalizaron o se cancelaron");
                 }
             };
@@ -82,9 +86,33 @@ public class ProcesadorApp extends Application {
             cancelar.setDisable(true);
             estado.setText("Cancelación solicitada...");
         });
+        reiniciar.setOnAction(e -> {
+            if(tarea1 != null && !tarea1.isDone()){
+                return;
+            }
+            if(tarea2 != null && !tarea2.isDone()){
+                return;
+            }
+            contador.reiniciar();
+            total.setText("Procesador: 0");
+            barra1.progressProperty().unbind();
+            barra2.progressProperty().unbind();
+            barra1.setProgress(0);
+            barra2.setProgress(0);
+
+            estado.setText(
+                    "Sin iniciar"
+            );
+            tarea1 = null;
+            tarea2 = null;
+
+            iniciar.setDisable(false);
+            cancelar.setDisable(true);
+            reiniciar.setDisable(true);
+        });
         VBox raiz = new VBox(12, total, estado,
                 new Label("Operador A"), barra1,
-                new Label("Operador B"), barra2, iniciar, cancelar);
+                new Label("Operador B"), barra2, iniciar, cancelar, reiniciar);
         raiz.setStyle("-fx-padding: 20;");
         ventana.setScene(new Scene(raiz, 380, 300));
         ventana.setTitle("Procesamiento concurrente");
@@ -94,7 +122,6 @@ public class ProcesadorApp extends Application {
         });
         ventana.show();
     }
-    {
-}
+
     public static void main(String[] args) { launch(args); }
 }
